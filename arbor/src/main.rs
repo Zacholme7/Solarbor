@@ -1,65 +1,32 @@
 use anyhow::Result;
-use reqwest::Client;
-use serde::Deserialize;
-use serde_json::Value;
-use std::collections::HashMap;
+use dotenv::dotenv;
+use jupiter_swap_api_client::JupiterSwapApiClient;
+use tokio;
+use crate::birdeye::fetch_trending;
+use crate::jup::get_quote;
 
-
-#[derive(Deserialize, Debug)]
-struct Token {
-        address: String,
-        name: String
-}
-
-#[derive(Deserialize, Debug)]
-struct TokenList {
-        tokens: Vec<Token>
-}
-
-
-#[derive(Deserialize, Debug)]
-struct ApiResponse {
-        data: TokenList
-}
-
-
+mod birdeye;
+mod jup;
 
 
 #[tokio::main]
 async fn main() -> Result<()> {
-        let url = "https://public-api.birdeye.so/defi/tokenlist?sort_by=v24hUSD&sort_type=desc";
-        let api_key = "59e9ffa005134bf193ddc73b3a36a51f";
+        // load in configuration
+        dotenv().ok();
 
-        let client = Client::new();
-        let response = client
-                .get(url)
-                .header("X-API-KEY", api_key)
-                .send()
-                .await?
-                .json::<ApiResponse>()
-                .await?;
+        //  find the latests 24hour trending on birdeye
+        let trending = fetch_trending().await?;
 
-        let mut token_map: HashMap<String, String> = HashMap::new();
-
-        for token in response.data.tokens {
-                token_map.insert(token.name, token.address);
-        }
-
-        // Print the token map
-        for (name, address) in &token_map {
-                println!("Name: {}, Address: {}", name, address);
-        }
+        let jupiter_swap_api_client = JupiterSwapApiClient::new("https://quote-api.jup.ag/v6".to_string());
+        let _ = get_quote(
+                &jupiter_swap_api_client,
+                trending["USDT"].clone(),
+                trending["POPCAT"].clone(),
+                100_000
+        ).await?;
 
         Ok(())
 }
-
-/* 
-async fn get_quote(client: &Client, input_mint: &str, output_mint: &str, amount: u64) -> Result<Value> {
-        let url = format!("https://quote-api.jup.ag/v1/quote?inputMint={}&outputMint={}&amount={}", input_mint, output_mint, amount);
-        let res = client.get(&url).send().await?.json::<Value>().await?;
-        Ok(res)
-}
-*/
 
 
 
