@@ -6,9 +6,9 @@ use serde_json::Value;
 use std::collections::HashMap;
 
 #[derive(Deserialize, Debug)]
-struct Token {
-        address: String,
-        name: String
+pub struct Token {
+        pub address: String,
+        pub name: String
 }
 
 #[derive(Deserialize, Debug)]
