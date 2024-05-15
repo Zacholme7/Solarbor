@@ -380,10 +380,12 @@ version = "0.1.0"
 dependencies = [
  "anchor-client",
  "anyhow",
+ "arrayref",
  "dotenv",
  "env_logger 0.11.3",
  "jupiter-swap-api-client",
  "log",
+ "num_enum 0.7.2",
  "reqwest 0.12.4",
  "serde",
  "serde_json",

@@ -1,23 +1,24 @@
-use crate::birdeye::fetch_trending;
-use crate::graph::build_graph;
-use crate::jup::get_quote;
+use anchor_client::solana_sdk::pubkey::Pubkey;
 use crate::pools::pool::Pool;
 use crate::pools::raydium::fetch_all_pairs;
 use anchor_client::solana_client::rpc_client::RpcClient;
 use anchor_client::solana_sdk::commitment_config::CommitmentConfig;
+use anchor_client::solana_sdk::signature::read_keypair_file;
 use anchor_client::{Client, Cluster};
 use anyhow::Result;
 use dotenv::dotenv;
 use env_logger;
-use jupiter_swap_api_client::JupiterSwapApiClient;
 use log::{debug, info, warn};
 use std::collections::{HashMap, HashSet};
-use tokio;
+use std::str::FromStr;
+
+use crate::util::unpack_token_account;
+
 mod birdeye;
 mod graph;
 mod jup;
 mod pools;
-use anchor_client::solana_sdk::pubkey::Pubkey;
+mod util;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -33,66 +34,69 @@ async fn main() -> Result<()> {
         _ => panic!("invalid cluster type"),
     };
 
-    let node_url = "https://api.devnet.solana.com";
+    // setup the rpc clients
+    let node_url = std::env::var("NODE_URL")?;
     let connection = RpcClient::new_with_commitment(node_url, CommitmentConfig::confirmed());
-    let send_tx_client =
-        RpcClient::new_with_commitment(cluster.url(), CommitmentConfig::confirmed());
+    let send_tx_client = RpcClient::new_with_commitment(cluster.url(), CommitmentConfig::confirmed());
 
-    info!("loading in raydium pools");
-    let raydium_pools: Vec<Pool> = fetch_all_pairs().await?;
-    info!("fetched {} pools from raydium", raydium_pools.len());
+    // state 
+    let mut pools: Vec<Pool> = vec![]; // track every pool available to swap
+    let mut token_mints: Vec<String> = vec![]; // track every unique token mint
+    let mut mint_to_index = HashMap::new(); // mint pubkey -> index in token_mints
+    let mut graph_edges: Vec<HashSet<usize>> = vec![];  // graph representation, index in token_mint to all edges (possible swaps)
 
-    let mut token_mints = vec![];
-    /*
-    let mut pools = vec![];
+    // load in all of the pools that we want to arb
+    info!("Loading in all pools");
+    pools.extend(fetch_all_pairs().await?);
 
-    let mut update_pks = vec![];
-    let mut update_pks_lengths = vec![];
-    let mut all_mint_idxs = vec![];
+    // process all of the pools
+    info!("Processing Pools");
+    for pool in &pools {
+        let mut local_mint_idx = vec![]; // track the indicies of the current pool mints
 
-    //let mut mint_to_index = HashMap::new();
-    */
-    //let mut graph_edges = vec![];
-    let mut mint_to_index = HashMap::new();
-    let mut graph_edges: Vec<_> = vec![];
-
-    for pool in raydium_pools {
-        //let mut mint_idxs = vec![];
-
-        let mut mint_idx = vec![];
-
-        for mint in [pool.mint_a, pool.mint_b] {
-            let idx;
-            if !token_mints.contains(&mint) {
-                idx = token_mints.len();
-                mint_to_index.insert(mint.clone(), idx);
-                token_mints.push(mint.clone());
-                graph_edges.push(HashSet::new());
-            } else {
-                idx = *mint_to_index.get(&mint).unwrap();
-            }
-            mint_idx.push(idx);
+        // process the mints for this pool
+        for mint in [&pool.mint_a, &pool.mint_b] {
+                let idx = match mint_to_index.get(mint) {
+                        Some(&idx) => idx,
+                        None => {
+                                let idx = token_mints.len();
+                                mint_to_index.insert(mint.clone(), idx);
+                                token_mints.push(mint.clone());
+                                graph_edges.push(HashSet::new());
+                                idx
+                        }
+                };
+                local_mint_idx.push(idx);
         }
-
-        //let update_accounts = pool.get_update_accounts();
-        let mint0_idx = mint_idx[0];
-        let mint1_idx = mint_idx[1];
-
-        if !graph_edges[mint0_idx].contains(&mint1_idx) {
-            graph_edges[mint0_idx].insert(mint1_idx);
-        }
-        if !graph_edges[mint1_idx].contains(&mint0_idx) {
-            graph_edges[mint1_idx].insert(mint0_idx);
-        }
+        // mint --> [mint, ....]
+        graph_edges[local_mint_idx[0]].insert(local_mint_idx[1]);
+        graph_edges[local_mint_idx[1]].insert(local_mint_idx[0]);
     }
 
-    info!("added {:?} mints", token_mints.len());
+    info!("Added {} pools", pools.len());
+    info!("Added {} mints", token_mints.len());
 
-    /*
-    let usdc_mint = Pubkey::new("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v").unwrap();
+
+    /* 
+
+    let usdc_mint = Pubkey::from_str("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v").unwrap();
     let start_mint = usdc_mint;
-    let start_mint_idx = *mint_to_index.get(&start_mint).unwrap();
+    let start_mint_idx = *mint_to_index.get(&start_mint.to_string()).unwrap();
+
+    info!("Getting pool amounts");
+
+    //let mut update_accounts = vec![];
+    for token_addr_chunk in update_keys.chunks(99) {
+        let accounts = connection.get_multiple_accounts(token_addr_chunk).unwrap();
+        info!("{:?}, {:?}", token_addr_chunk, accounts);
+    }
+
+
+    let init_token_balance = unpack_token_account(&init_token)
     */
 
     Ok(())
 }
+
+
+
