@@ -13,6 +13,7 @@ use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 
 use crate::util::unpack_token_account;
+use crate::graph::Graph;
 
 mod birdeye;
 mod graph;
@@ -44,13 +45,14 @@ async fn main() -> Result<()> {
     let mut token_mints: Vec<String> = vec![]; // track every unique token mint
     let mut mint_to_index = HashMap::new(); // mint pubkey -> index in token_mints
     let mut graph_edges: Vec<HashSet<usize>> = vec![];  // graph representation, index in token_mint to all edges (possible swaps)
+    let mut graph = Graph::new(); // construct a new graph to represent entire network
 
     // load in all of the pools that we want to arb
     info!("Loading in all pools");
     pools.extend(fetch_all_pairs().await?);
 
     // process all of the pools
-    info!("Processing Pools");
+    info!("Processing Pools and setting up graphs");
     for pool in &pools {
         let mut local_mint_idx = vec![]; // track the indicies of the current pool mints
 
@@ -71,32 +73,47 @@ async fn main() -> Result<()> {
         // mint --> [mint, ....]
         graph_edges[local_mint_idx[0]].insert(local_mint_idx[1]);
         graph_edges[local_mint_idx[1]].insert(local_mint_idx[0]);
+
+        // add into the main graph
+        graph.add_pool(local_mint_idx[0], local_mint_idx[1], pool.clone());
+
+
     }
 
     info!("Added {} pools", pools.len());
     info!("Added {} mints", token_mints.len());
+    info!("{:?}", graph.graph[&0].edge[&10]);
 
 
-    /* 
-
-    let usdc_mint = Pubkey::from_str("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v").unwrap();
-    let start_mint = usdc_mint;
-    let start_mint_idx = *mint_to_index.get(&start_mint.to_string()).unwrap();
-
-    info!("Getting pool amounts");
-
-    //let mut update_accounts = vec![];
-    for token_addr_chunk in update_keys.chunks(99) {
-        let accounts = connection.get_multiple_accounts(token_addr_chunk).unwrap();
-        info!("{:?}, {:?}", token_addr_chunk, accounts);
-    }
 
 
-    let init_token_balance = unpack_token_account(&init_token)
-    */
+
 
     Ok(())
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

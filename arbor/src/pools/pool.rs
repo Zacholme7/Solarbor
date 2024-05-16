@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Pool {
     pub id: String,
     pub mint_a: String,
@@ -8,7 +8,7 @@ pub struct Pool {
     pub pool_type: PoolType,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub enum PoolType {
     Raydium,
 }
