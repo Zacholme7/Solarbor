@@ -20,6 +20,7 @@ mod graph;
 mod jup;
 mod pools;
 mod util;
+mod calculator;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -57,7 +58,7 @@ async fn main() -> Result<()> {
         let mut local_mint_idx = vec![]; // track the indicies of the current pool mints
 
         // process the mints for this pool
-        for mint in [&pool.mint_a, &pool.mint_b] {
+        for mint in [&pool.base, &pool.quote] {
                 let idx = match mint_to_index.get(mint) {
                         Some(&idx) => idx,
                         None => {
@@ -82,7 +83,12 @@ async fn main() -> Result<()> {
 
     info!("Added {} pools", pools.len());
     info!("Added {} mints", token_mints.len());
-    //info!("{:?}", graph.graph[&0].edge[&10]);
+    let base = mint_to_index["EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"];
+    let quote = mint_to_index["HfYFjMKNZygfMC8LsQ8LtpPsPxEJoXJx4M6tqi75Hajo"];
+    info!("USDC index {}, CWAR index {}", base, quote);
+    info!("Edges out of USDC {:?}", graph.graph[&base].edge[&quote]);
+    info!("Edges out of CWAR {:?}", graph.graph[&quote].edge[&base]);
+
 
 
 

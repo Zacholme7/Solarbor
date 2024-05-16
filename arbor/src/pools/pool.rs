@@ -3,9 +3,14 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize, Clone)]
 pub struct Pool {
     pub id: String,
-    pub mint_a: String,
-    pub mint_b: String,
+    pub base: String,
+    pub quote: String,
+    pub base_vault: String,
+    pub quote_vault: String,
+    pub base_decimals: usize,
+    pub quote_decimals: usize,
     pub pool_type: PoolType,
+
 }
 
 #[derive(Debug, Deserialize, Clone)]

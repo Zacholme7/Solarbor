@@ -15,6 +15,7 @@ impl Graph {
     }
 
     pub fn add_pool(&mut self, mint_a: usize, mint_b: usize, pool: Pool) {
+        // Add pool for base -> quote direction
         self.graph
             .entry(mint_a)
             .or_insert_with(|| Edge {
@@ -25,6 +26,18 @@ impl Graph {
             .or_insert_with(Vec::new)
             .push(pool.clone());
 
+        // Add pool for quote -> base direction with swapped base and quote
+        let reversed_pool = Pool {
+            id: pool.id.clone(),
+            base: pool.quote.clone(),
+            quote: pool.base.clone(),
+            base_vault: pool.quote_vault.clone(),
+            quote_vault: pool.base_vault.clone(),
+            base_decimals: pool.quote_decimals,
+            quote_decimals: pool.base_decimals,
+            pool_type: pool.pool_type.clone(),
+        };
+
         self.graph
             .entry(mint_b)
             .or_insert_with(|| Edge {
@@ -33,7 +46,7 @@ impl Graph {
             .edge
             .entry(mint_a)
             .or_insert_with(Vec::new)
-            .push(pool);
+            .push(reversed_pool);
     }
 }
 
