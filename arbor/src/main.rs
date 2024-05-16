@@ -82,7 +82,7 @@ async fn main() -> Result<()> {
 
     info!("Added {} pools", pools.len());
     info!("Added {} mints", token_mints.len());
-    info!("{:?}", graph.graph[&0].edge[&10]);
+    //info!("{:?}", graph.graph[&0].edge[&10]);
 
 
 
