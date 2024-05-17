@@ -36,8 +36,8 @@ impl Graph {
             base_decimals: pool.quote_decimals,
             quote_decimals: pool.base_decimals,
             pool_type: pool.pool_type.clone(),
-            market_base_vault: pool.market_quote_vault.clone(),
-            market_quote_vault: pool.market_base_vault.clone()
+            base_vault_total: pool.quote_vault_total.clone(),
+            quote_vault_total: pool.base_vault_total.clone()
         };
 
         self.graph

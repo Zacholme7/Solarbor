@@ -1,5 +1,6 @@
+use crate::pools::meteora::fetch_meteora_pools;
 use crate::pools::pool::Pool;
-use crate::pools::raydium::fetch_all_pairs;
+use crate::pools::raydium::fetch_raydium_pools;
 use anchor_client::solana_client::rpc_client::RpcClient;
 use anchor_client::solana_sdk::commitment_config::CommitmentConfig;
 use anchor_client::solana_sdk::pubkey::Pubkey;
@@ -12,9 +13,11 @@ use log::{debug, info, warn};
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 
-use crate::calculator::get_amount_out;
+//use crate::calculator::get_amount_out;
+use crate::quoter::get_amount_out;
 use crate::graph::Graph;
 use crate::util::{decode_account_data, unpack_token_account, TokenAccount};
+use crate::pools::pool::PoolType;
 
 mod birdeye;
 mod calculator;
@@ -22,6 +25,8 @@ mod graph;
 mod jup;
 mod pools;
 mod util;
+mod quoter;
+mod arb;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -52,7 +57,8 @@ async fn main() -> Result<()> {
 
     // load in all of the pools that we want to arb
     info!("Loading in all pools");
-    pools.extend(fetch_all_pairs().await?);
+    pools.extend(fetch_raydium_pools().await?);
+    pools.extend(fetch_meteora_pools().await?);
 
     // process all of the pools
     info!("Processing Pools and setting up graphs");
@@ -84,7 +90,17 @@ async fn main() -> Result<()> {
     info!("Added {} pools", pools.len());
     info!("Added {} mints", token_mints.len());
 
+
+
+    let cwar = Pubkey::from_str("HfYFjMKNZygfMC8LsQ8LtpPsPxEJoXJx4M6tqi75Hajo")?;
+    let usdc =  Pubkey::from_str("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v")?;
+    let out = get_amount_out(cwar, usdc, 55.0, PoolType::Raydium);
+
+
+    /*
     // get the indicies and the pool
+    //
+
     let base = mint_to_index["HfYFjMKNZygfMC8LsQ8LtpPsPxEJoXJx4M6tqi75Hajo"];
     let quote = mint_to_index["EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"];
     let pool = graph.get_pool(base, quote).unwrap().get(0).unwrap();
@@ -95,8 +111,10 @@ async fn main() -> Result<()> {
     let base_vault_account = connection.get_account(&pool_state.base_vault).unwrap();
     let quote_vault_account = connection.get_account(&pool_state.quote_vault).unwrap();
 
-    let base_vault_total = unpack_token_account(&base_vault_account.data).amount  - pool_state.base_need_take_pnl;
-    let quote_vault_total = unpack_token_account(&quote_vault_account.data).amount - pool_state.quote_need_take_pnl;
+    let base_vault_total =
+        unpack_token_account(&base_vault_account.data).amount - pool_state.base_need_take_pnl;
+    let quote_vault_total =
+        unpack_token_account(&quote_vault_account.data).amount - pool_state.quote_need_take_pnl;
 
     println!("Pool: {:?}", pool_state);
     println!(
@@ -108,6 +126,7 @@ async fn main() -> Result<()> {
     );
     let res = get_amount_out(base_vault_total as f64, quote_vault_total as f64, 55.0);
     println!("output {:?}", res);
+    */
 
     Ok(())
 }

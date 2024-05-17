@@ -18,10 +18,6 @@ struct RaydiumPool {
     pub base_decimals: usize, 
     #[serde(rename = "quoteDecimals")]
     pub quote_decimals: usize,
-    #[serde(rename = "marketBaseVault")]
-    pub market_base_vault: String,
-    #[serde(rename = "marketQuoteVault")]
-    pub market_quote_vault: String
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -32,7 +28,7 @@ struct RaydiumPools {
 }
 
 // fetch all the pools and deserialize them into a vector of pools
-pub async fn fetch_all_pairs() -> Result<Vec<Pool>> {
+pub async fn fetch_raydium_pools() -> Result<Vec<Pool>> {
     let url = "https://api.raydium.io/v2/sdk/liquidity/mainnet.json";
     let client = Client::new();
     let response = client.get(url).send().await?.json::<RaydiumPools>().await?;
@@ -48,9 +44,10 @@ pub async fn fetch_all_pairs() -> Result<Vec<Pool>> {
             quote_vault: p.quote_vault,
             base_decimals: p.base_decimals,
             quote_decimals: p.quote_decimals,
+            base_vault_total: 0,
+            quote_vault_total: 0,
             pool_type: PoolType::Raydium,
-            market_base_vault: p.market_base_vault,
-            market_quote_vault: p.market_quote_vault
+
         })
         .collect();
     Ok(pools)

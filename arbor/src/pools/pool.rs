@@ -9,12 +9,13 @@ pub struct Pool {
     pub quote_vault: String,
     pub base_decimals: usize,
     pub quote_decimals: usize,
+    pub base_vault_total: u64,
+    pub quote_vault_total: u64,
     pub pool_type: PoolType,
-    pub market_base_vault: String,
-    pub market_quote_vault: String,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 pub enum PoolType {
     Raydium,
+    Meteora
 }
