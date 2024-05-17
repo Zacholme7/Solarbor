@@ -3,6 +3,8 @@ use anchor_client::solana_sdk::program_option::COption;
 use anchor_client::solana_sdk::program_error::ProgramError;
 use arrayref::{array_ref, array_refs};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use borsh::{BorshDeserialize, BorshSerialize, BorshSchema};
+use anyhow::Result;
 
 use std::fmt::Debug;
 use std::str::FromStr;
@@ -150,4 +152,67 @@ pub fn unpack_token_account(data: &[u8]) -> TokenAccount {
         delegated_amount: u64::from_le_bytes(*delegated_amount),
         close_authority: unpack_coption_key(close_authority).unwrap(),
     }
+}
+
+
+
+#[repr(C)]
+#[derive(Clone, Debug, Default, PartialEq, BorshSerialize, BorshDeserialize, BorshSchema)]
+pub struct LiquidityStateV4 {
+    pub status: u64,
+    pub nonce: u64,
+    pub max_order: u64,
+    pub depth: u64,
+    pub base_decimal: u64,
+    pub quote_decimal: u64,
+    pub state: u64,
+    pub reset_flag: u64,
+    pub min_size: u64,
+    pub vol_max_cut_ratio: u64,
+    pub amount_wave_ratio: u64,
+    pub base_lot_size: u64,
+    pub quote_lot_size: u64,
+    pub min_price_multiplier: u64,
+    pub max_price_multiplier: u64,
+    pub system_decimal_value: u64,
+    pub min_separate_numerator: u64,
+    pub min_separate_denominator: u64,
+    pub trade_fee_numerator: u64,
+    pub trade_fee_denominator: u64,
+    pub pnl_numerator: u64,
+    pub pnl_denominator: u64,
+    pub swap_fee_numerator: u64,
+    pub swap_fee_denominator: u64,
+    pub base_need_take_pnl: u64,
+    pub quote_need_take_pnl: u64,
+    pub quote_total_pnl: u64,
+    pub base_total_pnl: u64,
+    pub pool_open_time: u64,
+    pub punish_pc_amount: u64,
+    pub punish_coin_amount: u64,
+    pub orderbook_to_init_time: u64,
+    pub swap_base_in_amount: u128,
+    pub swap_quote_out_amount: u128,
+    pub swap_base2_quote_fee: u64,
+    pub swap_quote_in_amount: u128,
+    pub swap_base_out_amount: u128,
+    pub swap_quote2_base_fee: u64,
+    pub base_vault: Pubkey,
+    pub quote_vault: Pubkey,
+    pub base_mint: Pubkey,
+    pub quote_mint: Pubkey,
+    pub lp_mint: Pubkey,
+    pub open_orders: Pubkey,
+    pub market_id: Pubkey,
+    pub market_program_id: Pubkey,
+    pub target_orders: Pubkey,
+    pub withdraw_queue: Pubkey,
+    pub lp_vault: Pubkey,
+    pub owner: Pubkey,
+    pub lp_reserve: u64,
+    pub padding: [u64; 3],
+}
+
+pub fn decode_account_data(data: &[u8]) -> Result<LiquidityStateV4> {
+    Ok(LiquidityStateV4::try_from_slice(data)?)
 }

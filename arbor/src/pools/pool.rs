@@ -10,7 +10,8 @@ pub struct Pool {
     pub base_decimals: usize,
     pub quote_decimals: usize,
     pub pool_type: PoolType,
-
+    pub market_base_vault: String,
+    pub market_quote_vault: String,
 }
 
 #[derive(Debug, Deserialize, Clone)]

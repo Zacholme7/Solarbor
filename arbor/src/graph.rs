@@ -36,6 +36,8 @@ impl Graph {
             base_decimals: pool.quote_decimals,
             quote_decimals: pool.base_decimals,
             pool_type: pool.pool_type.clone(),
+            market_base_vault: pool.market_quote_vault.clone(),
+            market_quote_vault: pool.market_base_vault.clone()
         };
 
         self.graph
@@ -47,6 +49,11 @@ impl Graph {
             .entry(mint_a)
             .or_insert_with(Vec::new)
             .push(reversed_pool);
+    }
+
+
+    pub fn get_pool(&self, base_idx: usize, quote_idx: usize) -> Option<&Vec<Pool>> {
+        self.graph.get(&base_idx)?.edge.get(&quote_idx)
     }
 }
 

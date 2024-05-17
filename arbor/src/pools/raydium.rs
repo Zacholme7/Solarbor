@@ -18,7 +18,10 @@ struct RaydiumPool {
     pub base_decimals: usize, 
     #[serde(rename = "quoteDecimals")]
     pub quote_decimals: usize,
-
+    #[serde(rename = "marketBaseVault")]
+    pub market_base_vault: String,
+    #[serde(rename = "marketQuoteVault")]
+    pub market_quote_vault: String
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -46,6 +49,8 @@ pub async fn fetch_all_pairs() -> Result<Vec<Pool>> {
             base_decimals: p.base_decimals,
             quote_decimals: p.quote_decimals,
             pool_type: PoolType::Raydium,
+            market_base_vault: p.market_base_vault,
+            market_quote_vault: p.market_quote_vault
         })
         .collect();
     Ok(pools)
